@@ -1,0 +1,1 @@
+﻿Place your portrait image here as ayoub-portrait.jpg. The hero will display it automatically. Recommended portrait crop: vertical 4:5, JPG or WebP; update the src in src/App.jsx if you prefer a different filename.
