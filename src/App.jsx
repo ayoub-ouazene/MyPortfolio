@@ -29,6 +29,7 @@ export default function App() {
   const [bootRevealed, setBootRevealed] = useState(false)
   const [activeChapter, setActiveChapter] = useState(0)
   const [selectedProject, setSelectedProject] = useState(0)
+  const [portraitLoaded, setPortraitLoaded] = useState(false)
   const reduce = typeof window !== "undefined"
     && window.matchMedia("(prefers-reduced-motion: reduce)").matches
 
@@ -370,8 +371,19 @@ export default function App() {
           </div>
           <div className="hero-center">
             <div className="hero-coordinate">36°45′ N&nbsp; 3°03′ E <span>—&nbsp; 2026</span></div>
-            <div className="hero-portrait" aria-label="Portrait of Ayoub Ouazene">
-              <img src="/me.jpg" alt="Ayoub Ouazene" onError={(event) => { event.currentTarget.style.display = "none" }} />
+            <div className={`hero-portrait ${portraitLoaded ? "is-loaded" : ""}`} aria-label="Portrait of Ayoub Ouazene">
+              <img
+                src="/me.jpg"
+                alt="Ayoub Ouazene"
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
+                onLoad={() => setPortraitLoaded(true)}
+                onError={(event) => {
+                  setPortraitLoaded(false)
+                  event.currentTarget.style.display = "none"
+                }}
+              />
               <span className="portrait-placeholder"><i>AO</i><small>PORTRAIT<br />IMAGE</small></span>
               <span className="portrait-scan" />
             </div>
