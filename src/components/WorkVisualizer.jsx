@@ -46,7 +46,9 @@ export default function WorkVisualizer({ project, index, reduce }) {
     }
 
     let t = index * 1.3
+    let visible = false
     const draw = () => {
+      if (!visible) return
       t += 0.016
       ctx.clearRect(0, 0, width, height)
       const cx = width * (0.5 + (mx - 0.5) * 0.08)
@@ -100,9 +102,24 @@ export default function WorkVisualizer({ project, index, reduce }) {
     resize()
     window.addEventListener("resize", resize)
     wrap.addEventListener("pointermove", onMove, { passive: true })
-    rafId = requestAnimationFrame(draw)
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !visible) {
+          visible = true
+          rafId = requestAnimationFrame(draw)
+        } else if (!entry.isIntersecting) {
+          visible = false
+          cancelAnimationFrame(rafId)
+        }
+      },
+      { threshold: 0.05 }
+    )
+    observer.observe(wrap)
 
     return () => {
+      visible = false
+      observer.disconnect()
       cancelAnimationFrame(rafId)
       window.removeEventListener("resize", resize)
       wrap.removeEventListener("pointermove", onMove)

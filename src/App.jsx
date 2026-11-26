@@ -29,7 +29,6 @@ export default function App() {
   const [bootRevealed, setBootRevealed] = useState(false)
   const [activeChapter, setActiveChapter] = useState(0)
   const [selectedProject, setSelectedProject] = useState(0)
-  const [portraitLoaded, setPortraitLoaded] = useState(false)
   const reduce = typeof window !== "undefined"
     && window.matchMedia("(prefers-reduced-motion: reduce)").matches
 
@@ -60,10 +59,9 @@ export default function App() {
 
       ctx = gsap.context(() => {
         gsap.from(".hero-center", {
-          scale: 0.94,
-          y: 26,
-          opacity: 0,
-          duration: 1.35,
+          scale: 0.96,
+          y: 18,
+          duration: 1.15,
           ease: "power3.out",
         })
         gsap.from(".hero h1 .word > span", {
@@ -371,16 +369,14 @@ export default function App() {
           </div>
           <div className="hero-center">
             <div className="hero-coordinate">36°45′ N&nbsp; 3°03′ E <span>—&nbsp; 2026</span></div>
-            <div className={`hero-portrait ${portraitLoaded ? "is-loaded" : ""}`} aria-label="Portrait of Ayoub Ouazene">
+            <div className="hero-portrait" aria-label="Portrait of Ayoub Ouazene">
               <img
                 src="/me.jpg"
                 alt="Ayoub Ouazene"
                 loading="eager"
-                decoding="async"
+                decoding="sync"
                 fetchPriority="high"
-                onLoad={() => setPortraitLoaded(true)}
                 onError={(event) => {
-                  setPortraitLoaded(false)
                   event.currentTarget.style.display = "none"
                 }}
               />
@@ -520,7 +516,6 @@ export default function App() {
               <div className="chapter-kicker">{schooling.years} · {schooling.city}</div>
               <p className="school-name">{schooling.short}</p>
               <p className="school-detail">{schooling.school}. {schooling.degree}.</p>
-              <a className="repo cv-link" href="/cv.pdf" download>Download CV ↓</a>
             </div>
             <div className="contact-block">
               <div className="desk-orbit" aria-hidden="true" />

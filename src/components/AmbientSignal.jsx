@@ -52,18 +52,37 @@ export default function AmbientSignal({ reduce }) {
     }
 
     let tick = 0
+    let isDrawing = false
+
+    const startDraw = () => {
+      if (!isDrawing) {
+        isDrawing = true
+        rafId = requestAnimationFrame(draw)
+      }
+    }
+
+    const onScrollCheck = () => {
+      onScroll()
+      if (window.scrollY >= height * 0.35) {
+        startDraw()
+      }
+    }
+
     const draw = () => {
+      const fadeIn = Math.min(1, Math.max(0, (window.scrollY - height * 0.45) / (height * 0.4)))
+      if (fadeIn <= 0.01) {
+        ctx.clearRect(0, 0, width, height)
+        isDrawing = false
+        return
+      }
+
       tick += 0.01 + scrollBoost * 0.008
       scrollBoost *= 0.92
       const scrollRatio = window.scrollY / Math.max(1, document.documentElement.scrollHeight - height)
 
       ctx.clearRect(0, 0, width, height)
-
-      // Only reveal ambient signal cleanly below the hero fold so Hero keeps its crisp own canvas
-      const fadeIn = Math.min(1, Math.max(0, (window.scrollY - height * 0.45) / (height * 0.4)))
-      if (fadeIn > 0.01) {
-        ctx.save()
-        ctx.globalAlpha = fadeIn
+      ctx.save()
+      ctx.globalAlpha = fadeIn
 
         // Shifting radial nebula following scroll depth
         const nebulaY = height * (0.3 + Math.sin(scrollRatio * Math.PI) * 0.4)
@@ -130,7 +149,6 @@ export default function AmbientSignal({ reduce }) {
           }
         }
         ctx.restore()
-      }
 
       rafId = requestAnimationFrame(draw)
     }
@@ -138,14 +156,14 @@ export default function AmbientSignal({ reduce }) {
     init()
     window.addEventListener("resize", init)
     window.addEventListener("pointermove", onPointer, { passive: true })
-    window.addEventListener("scroll", onScroll, { passive: true })
-    rafId = requestAnimationFrame(draw)
+    window.addEventListener("scroll", onScrollCheck, { passive: true })
+    if (window.scrollY >= height * 0.35) startDraw()
 
     return () => {
       cancelAnimationFrame(rafId)
       window.removeEventListener("resize", init)
       window.removeEventListener("pointermove", onPointer)
-      window.removeEventListener("scroll", onScroll)
+      window.removeEventListener("scroll", onScrollCheck)
     }
   }, [reduce])
 

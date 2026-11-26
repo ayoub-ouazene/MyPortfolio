@@ -317,6 +317,7 @@ export default function ToolkitLab({ kit, onJumpToWork, reduce }) {
 
     let rafId = 0
     let tick = 0
+    let visible = false
 
     const drawLinks = () => {
       tick += 0.03
@@ -373,16 +374,31 @@ export default function ToolkitLab({ kit, onJumpToWork, reduce }) {
         })
       }
 
-      if (!reduce) {
+      if (!reduce && visible) {
         rafId = requestAnimationFrame(drawLinks)
       }
     }
 
-    drawLinks()
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          visible = true
+          drawLinks()
+        } else {
+          visible = false
+          cancelAnimationFrame(rafId)
+        }
+      },
+      { threshold: 0.05 }
+    )
+    observer.observe(stage)
+
     const onResize = () => drawLinks()
     window.addEventListener("resize", onResize)
 
     return () => {
+      visible = false
+      observer.disconnect()
       cancelAnimationFrame(rafId)
       window.removeEventListener("resize", onResize)
     }
