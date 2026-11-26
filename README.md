@@ -6,7 +6,7 @@ https://ayoubouazene.vercel.app/
 
 A modern, animated portfolio built with **React + Vite**.
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
 npm install
@@ -15,7 +15,7 @@ npm run dev
 
 Open http://localhost:5173
 
-## 📦 Build for Production
+## Build for Production
 
 ```bash
 npm run build
@@ -25,7 +25,7 @@ Output goes to `dist/` — upload this folder anywhere.
 
 ---
 
-## 🗂 Project Structure
+## Project Structure
 
 ```
 portfolio/
