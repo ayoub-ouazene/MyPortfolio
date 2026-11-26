@@ -44,7 +44,7 @@ portfolio/
 │   │   ├── Contact.jsx
 │   │   └── Footer.jsx
 │   ├── data/
-│   │   └── index.js        ← ALL YOUR CONTENT IS HERE
+│   │   └── index.js       
 │   ├── App.jsx
 │   ├── index.css
 │   └── main.jsx
