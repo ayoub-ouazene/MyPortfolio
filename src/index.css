@@ -101,12 +101,11 @@ body.hovering .cursor-ring { width: 54px; height: 54px; margin: -27px; backgroun
   transform: translate(calc(-50% + var(--mx)), calc(-50% + var(--my)));
   background: radial-gradient(
     circle at 46% 44%,
-    rgba(112, 246, 210, 0.18),
+    rgba(112, 246, 210, 0.2),
     rgba(24, 108, 84, 0.14) 36%,
     rgba(8, 22, 18, 0.04) 64%,
     transparent 74%
   );
-  filter: blur(28px);
   pointer-events: none;
   animation: auroraBreath 6s ease-in-out infinite;
 }

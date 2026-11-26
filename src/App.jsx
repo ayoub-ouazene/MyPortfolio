@@ -223,12 +223,13 @@ export default function App() {
               }
               const pulse = .65 + (Math.sin(tick * 2 + p.phase) + 1) * .3
               ctx2d.beginPath()
+              ctx2d.arc(p.x, p.y, p.r * pulse * 2.4, 0, Math.PI * 2)
+              ctx2d.fillStyle = "rgba(112, 246, 210, .14)"
+              ctx2d.fill()
+              ctx2d.beginPath()
               ctx2d.arc(p.x, p.y, p.r * pulse, 0, Math.PI * 2)
               ctx2d.fillStyle = "rgba(112, 246, 210, .9)"
-              ctx2d.shadowBlur = 12
-              ctx2d.shadowColor = "rgba(112, 246, 210, .65)"
               ctx2d.fill()
-              ctx2d.shadowBlur = 0
               for (let j = i + 1; j < particles.length; j++) {
                 const q = particles[j]
                 const distance = Math.hypot(p.x - q.x, p.y - q.y)
