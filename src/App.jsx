@@ -1,11 +1,17 @@
-﻿import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import {
-  person, chapters, practice, films, field, kit, schooling, paper, rooms,
+  person, freelance, chapters, films, field, kit, schooling,
 } from "./data/content"
+import BootSequence from "./components/BootSequence"
+import ScrollRail from "./components/ScrollRail"
+import AmbientSignal from "./components/AmbientSignal"
+import WorkVisualizer from "./components/WorkVisualizer"
+import ToolkitLab from "./components/ToolkitLab"
+import FieldDeck from "./components/FieldDeck"
 
 const ticker = [
-  "Computer vision", "Model compression", "Edge inference", "RAG",
-  "Vision transformers", "Multi-agent systems", "Time series", "Algiers",
+  "Full-stack engineering", "FastAPI & Next.js", "Computer vision", "Multi-agent RAG",
+  "Distributed APIs", "Edge inference", "Docker & CI/CD", "Algiers",
 ]
 
 function splitWords(text) {
@@ -19,11 +25,92 @@ function splitWords(text) {
 
 export default function App() {
   const root = useRef(null)
-  const [frame, setFrame] = useState(1)
-  const [expandedField, setExpandedField] = useState(0)
+  const lenisRef = useRef(null)
+  const [bootRevealed, setBootRevealed] = useState(false)
+  const [activeChapter, setActiveChapter] = useState(0)
   const [selectedProject, setSelectedProject] = useState(0)
   const reduce = typeof window !== "undefined"
     && window.matchMedia("(prefers-reduced-motion: reduce)").matches
+
+  const handleBootReveal = useCallback(() => {
+    setBootRevealed(true)
+  }, [])
+
+  const scrollToChapter = useCallback((id) => {
+    const target = document.getElementById(id)
+    if (!target) return
+    if (lenisRef.current) {
+      lenisRef.current.scrollTo(target, { offset: 0 })
+    } else {
+      target.scrollIntoView({ behavior: reduce ? "auto" : "smooth" })
+    }
+  }, [reduce])
+
+  // Hero entrance right as the intro curtain glides open
+  useEffect(() => {
+    if (!bootRevealed || reduce) return
+    let ctx
+    let killed = false
+
+    ;(async () => {
+      const gsapMod = await import("gsap")
+      const gsap = gsapMod.gsap || gsapMod.default
+      if (killed) return
+
+      ctx = gsap.context(() => {
+        gsap.from(".hero-center", {
+          scale: 0.94,
+          y: 26,
+          opacity: 0,
+          duration: 1.35,
+          ease: "power3.out",
+        })
+        gsap.from(".hero h1 .word > span", {
+          yPercent: 105,
+          duration: 1.2,
+          stagger: 0.09,
+          delay: 0.12,
+          ease: "power4.out",
+        })
+        gsap.from(".hero-meta, .hero-foot > *", {
+          y: 20,
+          opacity: 0,
+          duration: 1.0,
+          stagger: 0.1,
+          delay: 0.28,
+          ease: "power3.out",
+        })
+      }, root)
+    })()
+
+    return () => {
+      killed = true
+      if (ctx) ctx.revert()
+    }
+  }, [bootRevealed, reduce])
+
+  // Track active section for ScrollRail and Topbar
+  useEffect(() => {
+    const updateActive = () => {
+      const marker = window.scrollY + window.innerHeight * 0.38
+      let currentIdx = 0
+      chapters.forEach((chapter, idx) => {
+        const el = document.getElementById(chapter.id)
+        if (el && el.offsetTop <= marker) {
+          currentIdx = idx
+        }
+      })
+      setActiveChapter(currentIdx)
+    }
+
+    updateActive()
+    window.addEventListener("scroll", updateActive, { passive: true })
+    window.addEventListener("resize", updateActive)
+    return () => {
+      window.removeEventListener("scroll", updateActive)
+      window.removeEventListener("resize", updateActive)
+    }
+  }, [])
 
   useEffect(() => {
     const fine = window.matchMedia("(hover: hover) and (pointer: fine)").matches
@@ -31,7 +118,6 @@ export default function App() {
     let lenis
     let tickerCallback
     let removeTickerCallback
-    let resizeHandler
     let killed = false
     let rafId = 0
     let resizeCanvas
@@ -51,6 +137,7 @@ export default function App() {
         const Lenis = lenisMod.default
         if (killed) return
         lenis = new Lenis({ lerp: 0.085, smoothWheel: true })
+        lenisRef.current = lenis
         lenis.on("scroll", ScrollTrigger.update)
         tickerCallback = (time) => lenis.raf(time * 1000)
         gsap.ticker.add(tickerCallback)
@@ -166,124 +253,21 @@ export default function App() {
         }
 
         if (!reduce) {
-          const boot = gsap.timeline()
-          boot.to(".boot i", { opacity: 0, duration: 0.3, delay: 0.55 })
-          boot.to(".boot span:first-child", { yPercent: -100, duration: 0.9, ease: "power4.inOut" }, 0.7)
-          boot.to(".boot span:last-child", { yPercent: 100, duration: 0.9, ease: "power4.inOut" }, 0.7)
-          boot.set(".boot", { autoAlpha: 0 }, 1.6)
-          boot.from(".hero h1 .word > span", {
-            yPercent: 110, duration: 1.05, stagger: 0.06, ease: "power4.out",
-          }, 1.15)
-          boot.from(".hero-meta, .hero-foot > *", {
-            y: 24, opacity: 0, duration: 0.7, stagger: 0.08, ease: "power3.out",
-          }, 1.35)
-
           gsap.to(".marquee-track", { xPercent: -50, ease: "none", duration: 28, repeat: -1 })
-          
-          gsap.utils.toArray(".field-toggle").forEach((button) => {
-            const mark = button.querySelector(".field-toggle-mark")
-            const syncMark = () => gsap.to(mark, {
-              rotation: button.getAttribute("aria-expanded") === "true" ? 45 : 0,
-              duration: 0.25,
-              ease: "power2.out",
-            })
-            button.addEventListener("click", syncMark)
-            cleanups.push(() => button.removeEventListener("click", syncMark))
-          })
 
-          gsap.utils.toArray(".chapter h2, .pin-head h2").forEach((el) => {
+          gsap.utils.toArray(".chapter h2, .work-heading h2").forEach((el) => {
             gsap.from(el, {
               y: 28, opacity: 0, duration: 0.8, ease: "power3.out",
               scrollTrigger: { trigger: el, start: "top 88%" },
             })
           })
-          gsap.utils.toArray(".practice article, .stack-grid article").forEach((el) => {
-            gsap.from(el, {
-              y: 36, opacity: 0, duration: 0.7, ease: "power3.out",
-              scrollTrigger: { trigger: el, start: "top 90%" },
-            })
-          })
-
-          gsap.utils.toArray(".field-detail").forEach((detail) => {
-            const trigger = document.querySelector(`[aria-controls="${detail.id}"]`)
-            const syncDetail = () => {
-              detail.hidden = trigger.getAttribute("aria-expanded") !== "true"
-            }
-            trigger.addEventListener("click", syncDetail)
-            cleanups.push(() => trigger.removeEventListener("click", syncDetail))
-          })
-
-          const film = document.querySelector(".film")
-          const stage = document.querySelector(".pin-stage")
-          const projectButtons = gsap.utils.toArray(".project-picker button")
-          projectButtons.forEach((button, index) => {
-            const pick = () => {
-              setSelectedProject(index)
-              gsap.fromTo(".project-detail", { y: 14, opacity: 0.3 }, { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" })
-            }
-            button.addEventListener("click", pick)
-            cleanups.push(() => button.removeEventListener("click", pick))
-          })
-          document.querySelectorAll(".project-picker button").forEach((button) => {
-            const enter = () => button.classList.add("is-hovered")
-            const leave = () => button.classList.remove("is-hovered")
-            button.addEventListener("mouseenter", enter)
-            button.addEventListener("mouseleave", leave)
-            cleanups.push(() => {
-              button.removeEventListener("mouseenter", enter)
-              button.removeEventListener("mouseleave", leave)
-            })
-          })
-          let horizontalTween
-          const setupHorizontalFilm = () => {
-            if (!film || !stage || window.innerWidth <= 980 || horizontalTween) return
-            const distance = () => Math.max(0, film.scrollWidth - stage.clientWidth)
-            horizontalTween = gsap.to(film, {
-              x: () => -distance(),
-              ease: "none",
-              onUpdate: () => {
-                const x = Number(gsap.getProperty(film, "x")) || 0
-                const total = distance()
-                const progress = total ? Math.min(1, Math.max(0, -x / total)) : 0
-                const n = Math.min(films.length, Math.max(1, Math.ceil(progress * films.length)))
-                setFrame((current) => current === n ? current : n)
-              },
-              scrollTrigger: {
-                trigger: ".pin-wrap",
-                start: "top top",
-                end: () => "+=" + distance(),
-                pin: stage,
-                scrub: 0.6,
-                invalidateOnRefresh: true,
-                onRefresh: (self) => {
-                  const n = Math.min(films.length, Math.max(1, Math.ceil(self.progress * films.length)))
-                  setFrame(n)
-                },
-              },
-            })
-            horizontalTween.scrollTrigger?.refresh()
-          }
-          setupHorizontalFilm()
-          resizeHandler = () => {
-            if (window.innerWidth <= 980 && horizontalTween) {
-              horizontalTween.scrollTrigger?.kill()
-              horizontalTween.kill()
-              horizontalTween = null
-              gsap.set(film, { clearProps: "transform" })
-              gsap.set(stage, { clearProps: "height,padding" })
-            } else {
-              setupHorizontalFilm()
-            }
-            ScrollTrigger.refresh()
-          }
-          window.addEventListener("resize", resizeHandler)
 
           const header = document.querySelector(".topbar")
           ScrollTrigger.create({
             trigger: ".marquee",
             start: "top top",
             end: "bottom top",
-            onToggle: (self) => header.classList.toggle("topbar-on-ink", self.isActive),
+            onToggle: (self) => header?.classList.toggle("topbar-on-ink", self.isActive),
           })
 
           let last = 0
@@ -309,17 +293,19 @@ export default function App() {
           const move = (e) => {
             xTo(e.clientX); yTo(e.clientY); rx(e.clientX); ry(e.clientY)
           }
+          const over = (e) => {
+            if (e.target.closest("a, button, .scroll-rail-track")) {
+              document.body.classList.add("hovering")
+            } else {
+              document.body.classList.remove("hovering")
+            }
+          }
           window.addEventListener("mousemove", move)
-          cleanups.push(() => window.removeEventListener("mousemove", move))
-          document.querySelectorAll("a, button").forEach((el) => {
-            const enter = () => document.body.classList.add("hovering")
-            const leave = () => document.body.classList.remove("hovering")
-            el.addEventListener("mouseenter", enter)
-            el.addEventListener("mouseleave", leave)
-            cleanups.push(() => {
-              el.removeEventListener("mouseenter", enter)
-              el.removeEventListener("mouseleave", leave)
-            })
+          document.addEventListener("mouseover", over)
+          cleanups.push(() => {
+            window.removeEventListener("mousemove", move)
+            document.removeEventListener("mouseover", over)
+            document.body.classList.remove("hovering")
           })
         }
       }, root)
@@ -329,8 +315,8 @@ export default function App() {
 
     return () => {
       killed = true
+      lenisRef.current = null
       cleanups.forEach((cleanup) => cleanup())
-      if (resizeHandler) window.removeEventListener("resize", resizeHandler)
       if (rafId) cancelAnimationFrame(rafId)
       if (resizeCanvas) window.removeEventListener("resize", resizeCanvas)
       if (movePointer) window.removeEventListener("pointermove", movePointer)
@@ -341,34 +327,46 @@ export default function App() {
   }, [reduce])
 
   const loop = ticker.concat(ticker)
+  const activeFilm = films[selectedProject] || films[0]
 
   return (
     <div ref={root}>
-      {!reduce && (
-        <div className="boot" aria-hidden="true">
-          <span />
-          <span />
-          <i>A.O. — Algiers — folio 2026</i>
-        </div>
-      )}
+      <BootSequence reduce={reduce} onReveal={handleBootReveal} />
+      <AmbientSignal reduce={reduce} />
+      <ScrollRail
+        chapters={chapters}
+        activeChapter={activeChapter}
+        onNavigate={scrollToChapter}
+      />
+
       {!reduce && <div className="cursor" aria-hidden="true" />}
       {!reduce && <div className="cursor-ring" aria-hidden="true" />}
 
       <header className="topbar">
         <nav>
-          {chapters.slice(1).map((c) => (
-            <a key={c.id} href={"#" + c.id}>{c.label}</a>
+          {chapters.slice(1).map((c, idx) => (
+            <a
+              key={c.id}
+              href={"#" + c.id}
+              className={activeChapter === idx + 1 ? "is-active" : ""}
+              onClick={(e) => {
+                e.preventDefault()
+                scrollToChapter(c.id)
+              }}
+            >
+              {c.label}
+            </a>
           ))}
         </nav>
       </header>
 
-      <main>
+      <main className={bootRevealed || reduce ? "is-revealed" : "is-pre-reveal"}>
         <section className="hero" id="index">
           <canvas className="hero-signal-canvas" aria-hidden="true" />
           <div className="hero-meta">
             <span><i className="live-dot" /> SYSTEM / ONLINE</span>
             <span>{person.location} · {person.role}</span>
-            <span>AI / SYSTEMS / EDGE</span>
+            <span>AI / SOFTWARE / SYSTEMS</span>
           </div>
           <div className="hero-center">
             <div className="hero-coordinate">36°45′ N&nbsp; 3°03′ E <span>—&nbsp; 2026</span></div>
@@ -378,17 +376,26 @@ export default function App() {
               <span className="portrait-scan" />
             </div>
             <h1 aria-label={person.name}>
-              <span className="name-first">{person.first}</span>
-              <span className="name-last">{person.last}<i>.</i></span>
+              <span className="name-first">{splitWords(person.first)}</span>
+              <span className="name-last">{splitWords(person.last)}<i>.</i></span>
             </h1>
             <div className="hero-orbit orbit-one" />
             <div className="hero-orbit orbit-two" />
             <div className="hero-stamp">BUILD<br />THINGS<br /><em>THAT THINK</em></div>
           </div>
           <div className="hero-foot">
-            <p>Researching how machines see. Building systems that <em>do something with it.</em></p>
-            <div className="now-card"><span className="live-dot" /><small>IN PROGRESS</small><span>Arabic handwriting × ViT</span></div>
-            <a className="scroll-hint" href="#practice">SCROLL TO EXPLORE <span>↓</span></a>
+            <p>Engineering full-stack software and AI systems that <em>work in production.</em></p>
+            <div className="now-card"><span className="live-dot" /><small>FOCUS</small><span>Full-stack & AI agents</span></div>
+            <a
+              className="scroll-hint"
+              href="#work"
+              onClick={(e) => {
+                e.preventDefault()
+                scrollToChapter("work")
+              }}
+            >
+              SCROLL TO EXPLORE <span>↓</span>
+            </a>
           </div>
         </section>
 
@@ -400,120 +407,112 @@ export default function App() {
           </div>
         </div>
 
-        <section className="sheet" id="practice">
-          <div className="chapter">
-            <div className="chapter-kicker">01 — Practice</div>
-            <div>
-              <h2>{splitWords("Where the work sits.")}</h2>
-              <p className="lede">Research on handwriting and attention, a live dispatch system, and freelance builds where the model has to survive contact with a product.</p>
+        {/* Personal Introduction / What I Build */}
+        <section className="sheet freelance-band" aria-label="About Ayoub Ouazene">
+          <div className="freelance-inner">
+            <div className="freelance-meta">
+              <span className="chapter-kicker"><i className="live-dot" /> {freelance.kicker}</span>
+              <h3>{freelance.title}</h3>
             </div>
-          </div>
-          <div className="practice">
-            {practice.map((job) => (
-              <article key={job.place}>
-                <div className="when">{job.period}</div>
-                <div>
-                  <h3>{job.place}</h3>
-                  <div className="role">{job.role}</div>
-                </div>
-                <p>{job.note}</p>
-              </article>
-            ))}
+            <div className="freelance-copy">
+              <p>{freelance.summary}</p>
+              <div className="freelance-pillars">
+                {freelance.pillars.map((pillar) => (
+                  <span key={pillar}>{pillar}</span>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
 
-        <section className="work-section sheet" id="work">
+        {/* 01 — Selected Work / Projects */}
+        <section className="work-section sheet section-atmo" id="work">
+          <div className="section-orbit practice-orbit" aria-hidden="true" />
           <div className="work-heading">
-            <div className="chapter-kicker">02 — Selected transmissions</div>
+            <div className="chapter-kicker">01 — Selected transmissions</div>
             <div><span className="work-status"><i className="live-dot" /> {String(films.length).padStart(2, "0")} BUILDS / ARCHIVED</span><h2>Things I set<br /><em>in motion.</em></h2></div>
           </div>
           <div className="work-layout">
             <div className="project-picker" role="tablist" aria-label="Selected projects">
               {films.map((item, index) => (
-                <button className={selectedProject === index ? "active" : ""} key={item.num} type="button" role="tab" aria-selected={selectedProject === index} onClick={() => setSelectedProject(index)}>
+                <button
+                  className={selectedProject === index ? "active" : ""}
+                  key={item.num}
+                  type="button"
+                  role="tab"
+                  aria-selected={selectedProject === index}
+                  onClick={() => setSelectedProject(index)}
+                >
                   <span>{item.num}</span><b>{item.title}</b><i>↗</i>
                 </button>
               ))}
             </div>
             <article className="project-detail" role="tabpanel" key={selectedProject}>
-              <div className="project-detail-top"><span>TRANSMISSION / {films[selectedProject].num}</span><span>{films[selectedProject].kind}</span></div>
-              <div className="project-visual" aria-hidden="true">
-                <div className="visual-orbit visual-orbit-a" /><div className="visual-orbit visual-orbit-b" />
-                <span className="visual-code">{films[selectedProject].tags.slice(0, 3).join(" / ")}</span>
-                <strong>{films[selectedProject].num}</strong>
-              </div>
+              <div className="project-detail-top"><span>TRANSMISSION / {activeFilm.num}</span><span>{activeFilm.kind}</span></div>
+              <WorkVisualizer project={activeFilm} index={selectedProject} reduce={reduce} />
               <div className="project-copy">
-                <h3>{films[selectedProject].title}</h3>
-                <p className="line">{films[selectedProject].line}</p>
-                <p className="body">{films[selectedProject].body}</p>
-                <div className="tags">{films[selectedProject].tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
-                {films[selectedProject].href && <a className="repo" href={films[selectedProject].href} target="_blank" rel="noreferrer">Open repository <span>↗</span></a>}
+                <h3>{activeFilm.title}</h3>
+                <p className="line">{activeFilm.line}</p>
+                <p className="body">{activeFilm.body}</p>
+                <div className="tags">{activeFilm.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
+                <div className="project-links">
+                  {activeFilm.href && (
+                    <a className="repo" href={activeFilm.href} target="_blank" rel="noreferrer">
+                      Open repository <span>↗</span>
+                    </a>
+                  )}
+                  {activeFilm.live && (
+                    <a className="repo repo-secondary" href={activeFilm.live} target="_blank" rel="noreferrer">
+                      Live demo <span>↗</span>
+                    </a>
+                  )}
+                </div>
               </div>
               <div className="project-progress"><span style={{ transform: `scaleX(${(selectedProject + 1) / films.length})` }} /></div>
             </article>
           </div>
         </section>
 
-        <section className="sheet" id="field">
+        {/* 02 — Toolkit (AI & Software Engineering) */}
+        <section className="sheet section-atmo" id="stack">
+          <div className="chapter">
+            <div className="chapter-kicker">02 — Toolkit</div>
+            <div>
+              <h2>{splitWords("What I actually reach for.")}</h2>
+            </div>
+          </div>
+          <ToolkitLab kit={kit} reduce={reduce} onJumpToWork={() => scrollToChapter("work")} />
+        </section>
+
+        {/* 03 — In the Field (Compact Interactive Hackathons & Datathons Stage) */}
+        <section className="sheet section-atmo" id="field">
+          <div className="section-orbit field-orbit" aria-hidden="true" />
           <div className="chapter">
             <div className="chapter-kicker">03 — In the field</div>
             <div>
               <h2>{splitWords("Rooms with a clock.")}</h2>
-              <p className="lede">Datathons and hackathons, usually as the person who owns the model and the endpoint it has to leave through.</p>
+              <p className="lede">Participated in 10+ hackathons and datathons in general—here are 9 of the most notable ones, owning the models, the backend, and the product that leaves the room.</p>
             </div>
           </div>
-          <div className="field">
-            {field.map((row, index) => (
-              <article className="field-row" key={row.title}>
-                <div className="when">{row.when}</div>
-                <button
-                  className="field-toggle"
-                  type="button"
-                  aria-expanded={expandedField === index}
-                  aria-controls={`field-detail-${index}`}
-                  onClick={() => setExpandedField((current) => current === index ? -1 : index)}
-                >
-                  <span>{row.title}</span>
-                  <span className="field-toggle-mark" aria-hidden="true">{expandedField === index ? "−" : "+"}</span>
-                </button>
-                <div className="mark">{row.mark}</div>
-                <p className="field-detail" id={`field-detail-${index}`} hidden={expandedField !== index}>{row.detail}</p>
-                <noscript>{row.detail}</noscript>
-              </article>
-            ))}
-          </div>
+          <FieldDeck field={field} />
         </section>
 
-        <section className="sheet" id="stack">
-          <div className="chapter">
-            <div className="chapter-kicker">04 — Toolkit</div>
-            <h2>{splitWords("What I actually reach for.")}</h2>
-          </div>
-          <div className="stack-grid">
-            {kit.map((group) => (
-              <article key={group.name}>
-                <h3>{group.name}</h3>
-                <ul>{group.items.map((item) => <li key={item}>{item}</li>)}</ul>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="sheet" id="desk">
-          <div className="chapter">
-            <div className="chapter-kicker">05 — The desk</div>
-            <h2>{splitWords("School, paper, people.")}</h2>
+        {/* 04 — The Desk (Education & Contact, generous spacing) */}
+        <section className="sheet section-atmo desk-section" id="desk">
+          <div className="chapter desk-chapter">
+            <div className="chapter-kicker">04 — The desk</div>
+            <h2>{splitWords("School & contact.")}</h2>
           </div>
           <div className="desk">
-            <div>
+            <div className="desk-school-card">
               <div className="chapter-kicker">{schooling.years} · {schooling.city}</div>
               <p className="school-name">{schooling.short}</p>
-              <p>{schooling.school}. {schooling.degree}.</p>
+              <p className="school-detail">{schooling.school}. {schooling.degree}.</p>
               <a className="repo cv-link" href="/cv.pdf" download>Download CV ↓</a>
-              <ul className="paper-list">{paper.map((line) => <li key={line}>{line}</li>)}</ul>
-              <ul className="paper-list">{rooms.map((line) => <li key={line}>{line}</li>)}</ul>
             </div>
             <div className="contact-block">
+              <div className="desk-orbit" aria-hidden="true" />
+              <div className="desk-endpoint"><span className="live-dot" /> SIGNAL // ENDPOINT</div>
               <h2>Write me <em>a letter.</em></h2>
               <a className="mail" href={"mailto:" + person.email}>{person.email}</a>
               <div className="socials">
@@ -525,7 +524,7 @@ export default function App() {
           </div>
           <footer className="fineprint">
             <span>Ayoub Ouazene — Algiers</span>
-            <span>AI · software · edge</span>
+            <span>AI · full-stack · systems</span>
           </footer>
         </section>
       </main>
