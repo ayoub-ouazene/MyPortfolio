@@ -8,6 +8,7 @@ import AmbientSignal from "./components/AmbientSignal"
 import WorkVisualizer from "./components/WorkVisualizer"
 import ToolkitLab from "./components/ToolkitLab"
 import FieldDeck from "./components/FieldDeck"
+import meImg from "./assets/me.jpg"
 
 const ticker = [
   "Full-stack engineering", "FastAPI & Next.js", "Computer vision", "Multi-agent RAG",
@@ -372,7 +373,7 @@ export default function App() {
             <div className="hero-coordinate">36°45′ N&nbsp; 3°03′ E <span>—&nbsp; 2026</span></div>
             <div className="hero-portrait" aria-label="Portrait of Ayoub Ouazene">
               <img
-                src="/me.jpg"
+                src={meImg}
                 alt="Ayoub Ouazene"
                 loading="eager"
                 decoding="sync"
